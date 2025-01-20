@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Emotion Detection</title>
+</head>
+<body>
+    <h1>Upload Image for Emotion Detection</h1>
+    <input type="file" id="imageInput" accept="image/*">
+    <img id="imagePreview" width="200px" />
+    <button onclick="detectEmotion()">Detect Emotion</button>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('imageInput').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onloadend = function () {
+                document.getElementById('imagePreview').src = reader.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        async function detectEmotion() {
+            const fileInput = document.getElementById('imageInput');
+            const resultDiv = document.getElementById('result');
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = 'Please select an image.';
+                return;
+            }
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onloadend = async function () {
+                const base64Image = reader.result;
+
+                // Send to Flask backend
+                const response = await fetch('http://127.0.0.1:5000/detect_emotion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ image: base64Image })
+                });
+
+                const data = await response.json();
+
+                // Show the detected emotion
+                if (data.error) {
+                    resultDiv.innerHTML = `Error: ${data.error}`;
+                } else {
+                    resultDiv.innerHTML = `Detected Emotion: ${data.emotion}`;
+                }
+            };
+
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
